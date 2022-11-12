@@ -12,6 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use image::{ImageBuffer, RgbImage};
+
 fn main() {
-    println!("Hello, world!");
+    let width = 1280u32;
+    let height = 720u32;
+
+    // TODO: Create a camera origin
+
+    // TODO: Create a draw plane to shoot rays through
+
+    let img = ImageBuffer::from_fn(width, height, |x, y| {
+        image::Rgb([((255 * x) / width) as u8, ((255 * y) / height) as u8, 0u8])
+    });
+
+    // TODO: Run some ray marching to generate hits (or misses, I guess)
+
+    img.save("test.png").unwrap()
 }

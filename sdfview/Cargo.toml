@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 thiserror = "1.0"
+
+image = "0.24"
