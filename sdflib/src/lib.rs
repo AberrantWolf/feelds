@@ -18,8 +18,11 @@ use nalgebra as na;
 // An implementation of SDF functions.
 // Based on https://iquilezles.org/articles/distfunctions/
 
-pub mod sdf_box;
-pub mod sdf_sphere;
+mod sdf_box;
+mod sdf_sphere;
+
+pub use sdf_box::SdfBox;
+pub use sdf_sphere::SdfSphere;
 
 pub trait Sdf<T: RealField> {
     fn run(&self, pos: &Vector3<T>) -> T;

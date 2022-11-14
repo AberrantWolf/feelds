@@ -10,3 +10,6 @@ anyhow = "1.0"
 thiserror = "1.0"
 
 image = "0.24"
+nalgebra = "0.31"
+
+sdflib = {path="../sdflib"}

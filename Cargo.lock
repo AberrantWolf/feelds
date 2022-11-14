@@ -543,6 +543,8 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "image",
+ "nalgebra",
+ "sdflib",
  "thiserror",
 ]
 
