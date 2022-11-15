@@ -26,9 +26,9 @@ where
         radius: 1f32.into(),
     };
 
-    // let ob = SdfBox::<T> {
-    //     dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
-    // };
+    let ob = SdfBox::<T> {
+        dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
+    };
 
     let small_step = Vector3::<T>::new(0.001f32.into(), 0f32.into(), 0f32.into());
 
@@ -55,34 +55,26 @@ where
         radius: 1f32.into(),
     };
 
-    // let ob = SdfBox::<T> {
-    //     dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
-    // };
+    let ob = SdfBox::<T> {
+        dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
+    };
 
-    let mut count = 0u32;
-
-    let mut dist = ob.run(origin);
-    let mut new_origin = origin + direction * dist;
-
-    // println!("Origin: {} = {}", origin, dist);
+    let mut dist;
+    let mut new_origin = *origin;
 
     let contact = 0.001_f32.into();
     let nothing = 1000.0_f32.into();
 
     loop {
+        dist = ob.run(&new_origin);
         if dist < contact {
             return calc_normal::<T>(&new_origin);
-            // println!("Pixel found in {} jumps", count);
-            // return image::Rgb([255, 255, 255]);
         }
 
         if dist > nothing {
             return image::Rgb([63, 0, 63]);
         }
-
-        dist = ob.run(&new_origin);
         new_origin = new_origin + direction.scale(dist);
-        count += 1;
     }
 }
 
@@ -95,13 +87,8 @@ fn main() {
     let cam_pos = Vector3::new(2_f32, 1_f32, -2_f32);
     let cam_target = Vector3::new(0_f32, 0_f32, 0_f32);
     let cam_fwd = (cam_target - cam_pos).normalize();
-    // let cam_fwd = Vector3::new(0_f32, 0_f32, 1_f32);
     let cam_right = Vector3::new(0_f32, 1_f32, 0_f32).cross(&cam_fwd);
     let cam_up = cam_fwd.cross(&cam_right);
-
-    // println!("Camera right: {:?}", cam_right);
-    // println!("Camera up: {:?}", cam_up);
-    // println!("Camera forward: {:?}", cam_fwd);
 
     let ray_ctr = cam_pos + cam_fwd * zoom;
 
@@ -115,12 +102,6 @@ fn main() {
         let px_point = ray_ctr + u * cam_right * aspect - v * cam_up;
         let direction = (px_point - cam_pos).normalize();
 
-        // println!("Pixel: {:?}", px_point);
-        // println!("Direction: {:?}", direction);
-
-        // let ucolor = (255.0 * px_point.x.abs()) as u8;
-        // let vcolor = (255.0 * px_point.y.abs()) as u8;
-        // let col = image::Rgb([ucolor, vcolor, 0u8]);
         march_rays::<f32>(&cam_pos, &direction)
     });
 
