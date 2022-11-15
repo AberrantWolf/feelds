@@ -18,7 +18,7 @@ use nalgebra as na;
 use crate::Sdf;
 
 pub struct SdfBox<T> {
-    dims: Vector3<T>,
+    pub dims: Vector3<T>,
 }
 
 impl<T: RealField + Copy> Sdf<T> for SdfBox<T> {

@@ -14,47 +14,94 @@
 
 use image::ImageBuffer;
 use nalgebra::{RealField, Vector3};
+use num::cast::AsPrimitive;
 
-use sdflib::{Sdf, SdfSphere};
+use sdflib::{Sdf, SdfBox, SdfSphere};
+
+fn calc_normal<T>(point: &Vector3<T>) -> image::Rgb<u8>
+where
+    T: RealField + Copy + AsPrimitive<u8> + From<f32>,
+{
+    let ob = SdfSphere::<T> {
+        radius: 1f32.into(),
+    };
+
+    // let ob = SdfBox::<T> {
+    //     dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
+    // };
+
+    let small_step = Vector3::<T>::new(0.001f32.into(), 0f32.into(), 0f32.into());
+
+    let grad_x = ob.run(&(point + small_step.xyy())) - ob.run(&(point - small_step.xyy()));
+    let grad_y = ob.run(&(point + small_step.yxy())) - ob.run(&(point - small_step.yxy()));
+    let grad_z = ob.run(&(point + small_step.yyx())) - ob.run(&(point - small_step.yyx()));
+
+    let normal: Vector3<T> = Vector3::new(grad_x, grad_y, grad_z)
+        .normalize()
+        .scale(0.5f32.into())
+        .add_scalar(0.5f32.into());
+    let r = T::from(255_f32) * normal.x;
+    let g = T::from(255_f32) * normal.y;
+    let b = T::from(255_f32) * normal.z;
+
+    image::Rgb([r.as_(), g.as_(), b.as_()])
+}
 
 fn march_rays<T>(origin: &Vector3<T>, direction: &Vector3<T>) -> image::Rgb<u8>
 where
-    T: RealField + Copy,
+    T: RealField + Copy + AsPrimitive<u8> + From<f32>,
 {
-    let sph = SdfSphere::<T> {
-        radius: T::from_f32(1.0).unwrap(),
+    let ob = SdfSphere::<T> {
+        radius: 1f32.into(),
     };
 
-    let mut dist = sph.run(origin);
+    // let ob = SdfBox::<T> {
+    //     dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
+    // };
+
+    let mut count = 0u32;
+
+    let mut dist = ob.run(origin);
     let mut new_origin = origin + direction * dist;
 
-    let contact = T::from_f32(0.0001).unwrap();
-    let nothing = T::from_f32(1000.0).unwrap();
+    // println!("Origin: {} = {}", origin, dist);
+
+    let contact = 0.001_f32.into();
+    let nothing = 1000.0_f32.into();
 
     loop {
         if dist < contact {
-            return image::Rgb([255, 255, 255]);
+            return calc_normal::<T>(&new_origin);
+            // println!("Pixel found in {} jumps", count);
+            // return image::Rgb([255, 255, 255]);
         }
 
         if dist > nothing {
-            return image::Rgb([0, 0, 0]);
+            return image::Rgb([63, 0, 63]);
         }
 
-        new_origin = new_origin + direction * dist;
-        dist = sph.run(&new_origin);
+        dist = ob.run(&new_origin);
+        new_origin = new_origin + direction.scale(dist);
+        count += 1;
     }
 }
 
 fn main() {
-    let width = 1280u32;
-    let height = 720u32;
+    let width = 1280_u32;
+    let height = 720_u32;
     let aspect = width as f32 / height as f32;
-    let zoom = 1f32;
+    let zoom = 1_f32;
 
-    let cam_pos = Vector3::new(0f32, 0f32, -2f32);
-    let cam_fwd = Vector3::new(0f32, 0f32, 1f32);
-    let cam_right = Vector3::new(0f32, 1f32, 0f32).cross(&cam_fwd);
+    let cam_pos = Vector3::new(2_f32, 1_f32, -2_f32);
+    let cam_target = Vector3::new(0_f32, 0_f32, 0_f32);
+    let cam_fwd = (cam_target - cam_pos).normalize();
+    // let cam_fwd = Vector3::new(0_f32, 0_f32, 1_f32);
+    let cam_right = Vector3::new(0_f32, 1_f32, 0_f32).cross(&cam_fwd);
     let cam_up = cam_fwd.cross(&cam_right);
+
+    // println!("Camera right: {:?}", cam_right);
+    // println!("Camera up: {:?}", cam_up);
+    // println!("Camera forward: {:?}", cam_fwd);
 
     let ray_ctr = cam_pos + cam_fwd * zoom;
 
@@ -65,15 +112,16 @@ fn main() {
         let u = 2f32 * x_ratio - 1f32;
         let v = 2f32 * y_ratio - 1f32;
 
-        let px_point = ray_ctr + u * cam_right * aspect + v * cam_up;
-        let direction = px_point - cam_pos;
+        let px_point = ray_ctr + u * cam_right * aspect - v * cam_up;
+        let direction = (px_point - cam_pos).normalize();
+
+        // println!("Pixel: {:?}", px_point);
+        // println!("Direction: {:?}", direction);
 
         // let ucolor = (255.0 * px_point.x.abs()) as u8;
         // let vcolor = (255.0 * px_point.y.abs()) as u8;
         // let col = image::Rgb([ucolor, vcolor, 0u8]);
-        let col = march_rays(&cam_pos, &direction);
-
-        col
+        march_rays::<f32>(&cam_pos, &direction)
     });
 
     img.save("test.png").unwrap()
