@@ -12,26 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{RealField, Vector3};
-use nalgebra as na;
+use nalgebra::{RealField, Vector3};
 
-// An implementation of SDF functions.
-// Based on https://iquilezles.org/articles/distfunctions/
+use crate::{Sdf, SdfT};
 
-mod sdf_boolean;
-mod sdf_box;
-mod sdf_scene;
-mod sdf_sphere;
+pub struct SdfScene<T: SdfT> {
+    elements: Vec<Box<dyn Sdf<T>>>,
+}
 
-pub use sdf_boolean::SdfSubtract;
-pub use sdf_box::SdfBox;
-pub use sdf_scene::SdfScene;
-pub use sdf_sphere::SdfSphere;
+impl<T: SdfT> Sdf<T> for SdfScene<T> {
+    fn run(&self, pos: &Vector3<T>) -> T {
+        let mut smallest = T::max_value().unwrap();
+        self.elements.iter().for_each(|elem| {
+            let dist = elem.run(pos);
+            smallest = RealField::min(smallest, dist);
+        });
 
-pub trait SdfT: RealField + Copy {}
+        smallest
+    }
+}
 
-impl SdfT for f32 {}
-
-pub trait Sdf<T: SdfT> {
-    fn run(&self, pos: &Vector3<T>) -> T;
+impl<T: SdfT> SdfScene<T> {
+    pub fn from_vec(elems: Vec<Box<dyn Sdf<T>>>) -> Self {
+        SdfScene { elements: elems }
+    }
 }

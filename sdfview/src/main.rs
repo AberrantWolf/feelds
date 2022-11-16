@@ -13,28 +13,20 @@
 // limitations under the License.
 
 use image::ImageBuffer;
-use nalgebra::{RealField, Vector3};
+use nalgebra::Vector3;
 use num::cast::AsPrimitive;
 
-use sdflib::{Sdf, SdfBox, SdfSphere};
+use sdflib::{Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfT};
 
-fn calc_normal<T>(point: &Vector3<T>) -> image::Rgb<u8>
+fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Vector3<T>) -> image::Rgb<u8>
 where
-    T: RealField + Copy + AsPrimitive<u8> + From<f32>,
+    T: SdfT + AsPrimitive<u8> + From<f32>,
 {
-    let ob = SdfSphere::<T> {
-        radius: 1f32.into(),
-    };
-
-    let ob = SdfBox::<T> {
-        dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
-    };
-
     let small_step = Vector3::<T>::new(0.001f32.into(), 0f32.into(), 0f32.into());
 
-    let grad_x = ob.run(&(point + small_step.xyy())) - ob.run(&(point - small_step.xyy()));
-    let grad_y = ob.run(&(point + small_step.yxy())) - ob.run(&(point - small_step.yxy()));
-    let grad_z = ob.run(&(point + small_step.yyx())) - ob.run(&(point - small_step.yyx()));
+    let grad_x = scene.run(&(point + small_step.xyy())) - scene.run(&(point - small_step.xyy()));
+    let grad_y = scene.run(&(point + small_step.yxy())) - scene.run(&(point - small_step.yxy()));
+    let grad_z = scene.run(&(point + small_step.yyx())) - scene.run(&(point - small_step.yyx()));
 
     let normal: Vector3<T> = Vector3::new(grad_x, grad_y, grad_z)
         .normalize()
@@ -47,18 +39,14 @@ where
     image::Rgb([r.as_(), g.as_(), b.as_()])
 }
 
-fn march_rays<T>(origin: &Vector3<T>, direction: &Vector3<T>) -> image::Rgb<u8>
+fn march_rays<T>(
+    scene: &Box<dyn Sdf<T>>,
+    origin: &Vector3<T>,
+    direction: &Vector3<T>,
+) -> image::Rgb<u8>
 where
-    T: RealField + Copy + AsPrimitive<u8> + From<f32>,
+    T: SdfT + AsPrimitive<u8> + From<f32>,
 {
-    let ob = SdfSphere::<T> {
-        radius: 1f32.into(),
-    };
-
-    let ob = SdfBox::<T> {
-        dims: Vector3::<T>::new(0.5f32.into(), 0.5_f32.into(), 0.5_f32.into()),
-    };
-
     let mut dist;
     let mut new_origin = *origin;
 
@@ -66,9 +54,9 @@ where
     let nothing = 1000.0_f32.into();
 
     loop {
-        dist = ob.run(&new_origin);
+        dist = scene.run(&new_origin);
         if dist < contact {
-            return calc_normal::<T>(&new_origin);
+            return calc_normal::<T>(scene, &new_origin);
         }
 
         if dist > nothing {
@@ -79,9 +67,12 @@ where
 }
 
 fn main() {
+    // == final image settings ==
     let width = 1280_u32;
     let height = 720_u32;
     let aspect = width as f32 / height as f32;
+
+    // == setting up camera stuff ==
     let zoom = 1_f32;
 
     let cam_pos = Vector3::new(2_f32, 1_f32, -2_f32);
@@ -92,6 +83,20 @@ fn main() {
 
     let ray_ctr = cam_pos + cam_fwd * zoom;
 
+    // == making the scene ==
+    let the_box = Box::new(SdfBox {
+        dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
+    });
+    let the_sphere = Box::new(SdfSphere { radius: 1_f32 });
+
+    let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtract {
+        remove: the_sphere,
+        from: the_box,
+    });
+
+    let scene: Box<dyn Sdf<_>> = Box::new(SdfScene::from_vec(vec![bool_thing]));
+
+    // == rendering the image
     let img = ImageBuffer::from_fn(width, height, |x, y| {
         let x_ratio = x as f32 / width as f32;
         let y_ratio = y as f32 / height as f32;
@@ -102,7 +107,7 @@ fn main() {
         let px_point = ray_ctr + u * cam_right * aspect - v * cam_up;
         let direction = (px_point - cam_pos).normalize();
 
-        march_rays::<f32>(&cam_pos, &direction)
+        march_rays::<f32>(&scene, &cam_pos, &direction)
     });
 
     img.save("test.png").unwrap()

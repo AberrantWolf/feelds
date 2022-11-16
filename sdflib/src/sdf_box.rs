@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{RealField, Vector3};
+use na::Vector3;
 use nalgebra as na;
 
-use crate::Sdf;
+use crate::{Sdf, SdfT};
 
-pub struct SdfBox<T> {
+pub struct SdfBox<T: SdfT> {
     pub dims: Vector3<T>,
 }
 
-impl<T: RealField + Copy> Sdf<T> for SdfBox<T> {
+impl<T: SdfT> Sdf<T> for SdfBox<T> {
     fn run(&self, pos: &Vector3<T>) -> T {
         let q = pos.abs() - self.dims;
         let zero = T::from_f64(0.0).unwrap();

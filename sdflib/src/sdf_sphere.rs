@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::{RealField, Vector3};
+use nalgebra::Vector3;
 
-use crate::Sdf;
+use crate::{Sdf, SdfT};
 
 pub struct SdfSphere<T> {
     pub radius: T,
 }
 
-impl<T: RealField + Copy> Sdf<T> for SdfSphere<T> {
+impl<T: SdfT> Sdf<T> for SdfSphere<T> {
     fn run(&self, pos: &Vector3<T>) -> T {
         pos.magnitude() - self.radius
     }
