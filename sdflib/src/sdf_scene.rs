@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::{RealField, Vector3};
+use nalgebra::{Point3, RealField};
 
 use crate::{Sdf, SdfT};
 
@@ -21,7 +21,7 @@ pub struct SdfScene<T: SdfT> {
 }
 
 impl<T: SdfT> Sdf<T> for SdfScene<T> {
-    fn run(&self, pos: &Vector3<T>) -> T {
+    fn run(&self, pos: &Point3<T>) -> T {
         let mut smallest = T::max_value().unwrap();
         self.elements.iter().for_each(|elem| {
             let dist = elem.run(pos);

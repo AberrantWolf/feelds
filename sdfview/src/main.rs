@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use image::ImageBuffer;
-use nalgebra::Vector3;
+use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, Vector3};
 use num::cast::AsPrimitive;
 
-use sdflib::{Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfT};
+use sdflib::{Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfT, SdfTransform};
 
-fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Vector3<T>) -> image::Rgb<u8>
+fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Point3<T>) -> image::Rgb<u8>
 where
     T: SdfT + AsPrimitive<u8> + From<f32>,
 {
@@ -41,7 +41,7 @@ where
 
 fn march_rays<T>(
     scene: &Box<dyn Sdf<T>>,
-    origin: &Vector3<T>,
+    origin: &Point3<T>,
     direction: &Vector3<T>,
 ) -> image::Rgb<u8>
 where
@@ -75,8 +75,8 @@ fn main() {
     // == setting up camera stuff ==
     let zoom = 1_f32;
 
-    let cam_pos = Vector3::new(2_f32, 1_f32, -2_f32);
-    let cam_target = Vector3::new(0_f32, 0_f32, 0_f32);
+    let cam_pos = Point3::new(2_f32, 1_f32, -2_f32);
+    let cam_target = Point3::new(0_f32, 0_f32, 0_f32);
     let cam_fwd = (cam_target - cam_pos).normalize();
     let cam_right = Vector3::new(0_f32, 1_f32, 0_f32).cross(&cam_fwd);
     let cam_up = cam_fwd.cross(&cam_right);
@@ -87,7 +87,10 @@ fn main() {
     let the_box = Box::new(SdfBox {
         dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
     });
-    let the_sphere = Box::new(SdfSphere { radius: 1_f32 });
+    let the_sphere = Box::new(SdfTransform::new(
+        IsometryMatrix3::from_parts(Translation3::new(0_f32, 1_f32, 0_f32), Rotation3::default()),
+        Box::new(SdfSphere { radius: 1_f32 }),
+    ));
 
     let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtract {
         remove: the_sphere,

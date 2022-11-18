@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::Point3;
-use nalgebra as na;
+use nalgebra::IsometryMatrix3;
+use nalgebra::Point3;
 
 use crate::{Sdf, SdfT};
 
-pub struct SdfSubtract<T: SdfT> {
-    pub remove: Box<dyn Sdf<T>>,
-    pub from: Box<dyn Sdf<T>>,
+pub struct SdfTransform<T> {
+    invx: IsometryMatrix3<T>,
+    elem: Box<dyn Sdf<T>>,
 }
 
-impl<T: SdfT> Sdf<T> for SdfSubtract<T> {
+impl<T: SdfT> Sdf<T> for SdfTransform<T> {
     fn run(&self, pos: &Point3<T>) -> T {
-        let remove_dist = -self.remove.run(pos);
-        let keep_dist = self.from.run(pos);
+        let xfpos = self.invx.transform_point(pos);
+        self.elem.run(&xfpos)
+    }
+}
 
-        if remove_dist > keep_dist {
-            remove_dist
-        } else {
-            keep_dist
-        }
+impl<T: SdfT> SdfTransform<T> {
+    pub fn new(xform: IsometryMatrix3<T>, elem: Box<dyn Sdf<T>>) -> Self {
+        let invx = xform.inverse();
+        SdfTransform { invx, elem }
     }
 }
 
@@ -40,20 +41,16 @@ impl<T: SdfT> Sdf<T> for SdfSubtract<T> {
 //     use super::*;
 
 //     #[test]
-//     fn inside_box() {
-//         let bx = SdfBox {
-//             dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
-//         };
-//         let result = bx.run(&Vector3::new(0f32, 0f32, 0.5f32));
+//     fn inside_sphere() {
+//         let sph = SdfSphere { radius: 1f32 };
+//         let result = sph.run(&Vector3::new(0f32, 0f32, 0.5f32));
 //         assert_eq!(result < 0f32, true);
 //     }
 
 //     #[test]
-//     fn outside_box() {
-//         let bx = SdfBox {
-//             dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
-//         };
-//         let result = bx.run(&Vector3::new(0f32, 0f32, 1.5f32));
+//     fn outside_sphere() {
+//         let sph = SdfSphere { radius: 1f32 };
+//         let result = sph.run(&Vector3::new(0f32, 0f32, 1.5f32));
 //         assert_eq!(result > 0f32, true);
 //     }
 // }

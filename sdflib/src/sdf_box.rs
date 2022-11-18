@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::Vector3;
+use na::{Point3, Vector3};
 use nalgebra as na;
 
 use crate::{Sdf, SdfT};
@@ -22,8 +22,8 @@ pub struct SdfBox<T: SdfT> {
 }
 
 impl<T: SdfT> Sdf<T> for SdfBox<T> {
-    fn run(&self, pos: &Vector3<T>) -> T {
-        let q = pos.abs() - self.dims;
+    fn run(&self, pos: &Point3<T>) -> T {
+        let q = pos.coords.abs() - self.dims;
         let zero = T::from_f64(0.0).unwrap();
         q.map(|t| t.max(zero)).magnitude() + q.max().min(zero)
     }
@@ -38,7 +38,7 @@ mod tests {
         let bx = SdfBox {
             dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
         };
-        let result = bx.run(&Vector3::new(0f32, 0f32, 0.5f32));
+        let result = bx.run(&Point3::new(0f32, 0f32, 0.5f32));
         assert_eq!(result < 0f32, true);
     }
 
@@ -47,7 +47,7 @@ mod tests {
         let bx = SdfBox {
             dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
         };
-        let result = bx.run(&Vector3::new(0f32, 0f32, 1.5f32));
+        let result = bx.run(&Point3::new(0f32, 0f32, 1.5f32));
         assert_eq!(result > 0f32, true);
     }
 }

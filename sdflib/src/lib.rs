@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{RealField, Vector3};
+use na::{Point3, RealField};
 use nalgebra as na;
 
 // An implementation of SDF functions.
@@ -22,16 +22,18 @@ mod sdf_boolean;
 mod sdf_box;
 mod sdf_scene;
 mod sdf_sphere;
+mod sdf_transform;
 
 pub use sdf_boolean::SdfSubtract;
 pub use sdf_box::SdfBox;
 pub use sdf_scene::SdfScene;
 pub use sdf_sphere::SdfSphere;
+pub use sdf_transform::SdfTransform;
 
 pub trait SdfT: RealField + Copy {}
 
 impl SdfT for f32 {}
 
 pub trait Sdf<T: SdfT> {
-    fn run(&self, pos: &Vector3<T>) -> T;
+    fn run(&self, pos: &Point3<T>) -> T;
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::Vector3;
+use nalgebra::Point3;
 
 use crate::{Sdf, SdfT};
 
@@ -21,8 +21,8 @@ pub struct SdfSphere<T> {
 }
 
 impl<T: SdfT> Sdf<T> for SdfSphere<T> {
-    fn run(&self, pos: &Vector3<T>) -> T {
-        pos.magnitude() - self.radius
+    fn run(&self, pos: &Point3<T>) -> T {
+        pos.coords.magnitude() - self.radius
     }
 }
 
@@ -33,14 +33,14 @@ mod tests {
     #[test]
     fn inside_sphere() {
         let sph = SdfSphere { radius: 1f32 };
-        let result = sph.run(&Vector3::new(0f32, 0f32, 0.5f32));
+        let result = sph.run(&Point3::new(0f32, 0f32, 0.5f32));
         assert_eq!(result < 0f32, true);
     }
 
     #[test]
     fn outside_sphere() {
         let sph = SdfSphere { radius: 1f32 };
-        let result = sph.run(&Vector3::new(0f32, 0f32, 1.5f32));
+        let result = sph.run(&Point3::new(0f32, 0f32, 1.5f32));
         assert_eq!(result > 0f32, true);
     }
 }
