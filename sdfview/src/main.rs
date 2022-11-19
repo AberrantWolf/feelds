@@ -17,8 +17,7 @@ use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, UnitVector3, Ve
 use num::cast::AsPrimitive;
 
 use sdflib::{
-    Sdf, SdfBox, SdfPlane, SdfScene, SdfSmooth, SdfSphere, SdfSubtraction, SdfSubtractionSmooth,
-    SdfT, SdfTransform, SdfUnionSmooth,
+    Sdf, SdfBox, SdfPlane, SdfScene, SdfSmooth, SdfSphere, SdfT, SdfTransform, SdfUnionSmooth,
 };
 
 fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Point3<T>) -> image::Rgb<u8>

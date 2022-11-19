@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::{Point3, UnitVector3, Vector3};
+use nalgebra::{Point3, UnitVector3};
 
 use crate::{Sdf, SdfT};
 
@@ -30,6 +30,7 @@ impl<T: SdfT> Sdf<T> for SdfPlane<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use nalgebra::Vector3;
 
     #[test]
     fn above_plane() {
