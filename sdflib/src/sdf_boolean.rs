@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::Point3;
+use na::{ComplexField, Point3};
 use nalgebra as na;
 
 use crate::{Sdf, SdfT};
@@ -32,6 +32,43 @@ impl<T: SdfT> Sdf<T> for SdfSubtract<T> {
         } else {
             keep_dist
         }
+    }
+}
+
+pub struct SdfUnionSmooth<T: SdfT> {
+    pub a: Box<dyn Sdf<T>>,
+    pub b: Box<dyn Sdf<T>>,
+    pub smooth: T,
+}
+
+fn calc_union_smooth<T: SdfT>(a: &T, b: &T, k: &T) -> T {
+    let h_part = *k - ComplexField::abs(*a - *b);
+    let h = *na::partial_max(&h_part, &T::from_f32(0_f32).unwrap()).unwrap();
+
+    let min = *na::partial_min(a, b).unwrap();
+    min - h * h * T::from_f32(0.25_f32).unwrap() / *k
+}
+
+impl<T: SdfT> Sdf<T> for SdfUnionSmooth<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let a_dist = self.a.run(pos);
+        let b_dist = self.b.run(pos);
+        calc_union_smooth(&a_dist, &b_dist, &self.smooth)
+    }
+}
+
+pub struct SdfSubtractSmooth<T: SdfT> {
+    pub remove: Box<dyn Sdf<T>>,
+    pub from: Box<dyn Sdf<T>>,
+    pub smooth: T,
+}
+
+impl<T: SdfT> Sdf<T> for SdfSubtractSmooth<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let remove_dist = self.remove.run(pos);
+        let keep_dist = self.from.run(pos);
+
+        -calc_union_smooth(&remove_dist, &-keep_dist, &self.smooth)
     }
 }
 

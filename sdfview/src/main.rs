@@ -16,7 +16,9 @@ use image::ImageBuffer;
 use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, Vector3};
 use num::cast::AsPrimitive;
 
-use sdflib::{Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfT, SdfTransform};
+use sdflib::{
+    Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfSubtractSmooth, SdfT, SdfTransform,
+};
 
 fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Point3<T>) -> image::Rgb<u8>
 where
@@ -88,13 +90,17 @@ fn main() {
         dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
     });
     let the_sphere = Box::new(SdfTransform::new(
-        IsometryMatrix3::from_parts(Translation3::new(0_f32, 1_f32, 0_f32), Rotation3::default()),
+        IsometryMatrix3::from_parts(
+            Translation3::new(0_f32, 0.2_f32, 0.2_f32),
+            Rotation3::default(),
+        ),
         Box::new(SdfSphere { radius: 1_f32 }),
     ));
 
-    let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtract {
+    let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtractSmooth {
         remove: the_sphere,
         from: the_box,
+        smooth: 0.2_f32,
     });
 
     let scene: Box<dyn Sdf<_>> = Box::new(SdfScene::from_vec(vec![bool_thing]));

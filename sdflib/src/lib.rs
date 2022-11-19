@@ -24,7 +24,7 @@ mod sdf_scene;
 mod sdf_sphere;
 mod sdf_transform;
 
-pub use sdf_boolean::SdfSubtract;
+pub use sdf_boolean::{SdfSubtract, SdfSubtractSmooth, SdfUnionSmooth};
 pub use sdf_box::SdfBox;
 pub use sdf_scene::SdfScene;
 pub use sdf_sphere::SdfSphere;
