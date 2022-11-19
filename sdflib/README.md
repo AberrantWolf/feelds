@@ -19,7 +19,7 @@ These are the functions presented by Quilez (above)... I may skip some of these,
   - [ ] Cone
   - [ ] Cone (bound, not exact)
   - [ ] Infinite Cone
-  - [ ] Plane
+  - [x] Plane
   - [ ] Hexagonal Prism
   - [ ] Triangular Prism
   - [ ] Capsule/Line (2 vecs)

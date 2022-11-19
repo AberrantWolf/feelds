@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use image::ImageBuffer;
-use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, Vector3};
+use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, UnitVector3, Vector3};
 use num::cast::AsPrimitive;
 
 use sdflib::{
-    Sdf, SdfBox, SdfScene, SdfSmooth, SdfSphere, SdfSubtraction, SdfSubtractionSmooth, SdfT,
-    SdfTransform, SdfUnionSmooth,
+    Sdf, SdfBox, SdfPlane, SdfScene, SdfSmooth, SdfSphere, SdfSubtraction, SdfSubtractionSmooth,
+    SdfT, SdfTransform, SdfUnionSmooth,
 };
 
 fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Point3<T>) -> image::Rgb<u8>
@@ -56,17 +56,32 @@ where
     let contact = 0.001_f32.into();
     let nothing = 1000.0_f32.into();
 
+    let max_same = 3u32;
+
+    let mut last_dist = nothing;
+    let mut same_count = 0u32;
     loop {
         dist = scene.run(&new_origin);
+        if dist == last_dist {
+            same_count += 1;
+            if same_count >= max_same {
+                break;
+            }
+        } else {
+            last_dist = dist;
+            same_count = 0;
+        }
+
         if dist < contact {
             return calc_normal::<T>(scene, &new_origin);
         }
 
         if dist > nothing {
-            return image::Rgb([63, 0, 63]);
+            break;
         }
         new_origin = new_origin + direction.scale(dist);
     }
+    image::Rgb([63, 0, 63])
 }
 
 fn main() {
@@ -93,9 +108,6 @@ fn main() {
         }),
         smooth: 0.5_f32,
     });
-    // let the_box = Box::new(SdfBox {
-    //     dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
-    // });
     let the_sphere = Box::new(SdfTransform::new(
         IsometryMatrix3::from_parts(
             Translation3::new(0_f32, 1.25_f32, -0.5_f32),
@@ -103,20 +115,18 @@ fn main() {
         ),
         Box::new(SdfSphere { radius: 0.7_f32 }),
     ));
-
-    // let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtractSmooth {
-    //     remove: the_sphere,
-    //     from: the_box,
-    //     smooth: 0.2_f32,
-    // });
-
     let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfUnionSmooth {
         a: the_sphere,
         b: the_box,
         smooth: 0.2_f32,
     });
 
-    let scene: Box<dyn Sdf<_>> = Box::new(SdfScene::from_vec(vec![bool_thing]));
+    let ground: Box<dyn Sdf<_>> = Box::new(SdfPlane {
+        normal: UnitVector3::new_normalize(Vector3::new(0_f32, 1_f32, 0_f32)),
+        offset: -1_f32,
+    });
+
+    let scene: Box<dyn Sdf<_>> = Box::new(SdfScene::from_vec(vec![bool_thing, ground]));
 
     // == rendering the image
     let img = ImageBuffer::from_fn(width, height, |x, y| {
