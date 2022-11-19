@@ -18,17 +18,19 @@ use nalgebra as na;
 // An implementation of SDF functions.
 // Based on https://iquilezles.org/articles/distfunctions/
 
+mod sdf_alteration;
 mod sdf_boolean;
 mod sdf_box;
 mod sdf_scene;
 mod sdf_sphere;
 mod sdf_transform;
 
-pub use sdf_boolean::{SdfSubtract, SdfSubtractSmooth, SdfUnionSmooth};
-pub use sdf_box::SdfBox;
-pub use sdf_scene::SdfScene;
-pub use sdf_sphere::SdfSphere;
-pub use sdf_transform::SdfTransform;
+pub use sdf_alteration::*;
+pub use sdf_boolean::*;
+pub use sdf_box::*;
+pub use sdf_scene::*;
+pub use sdf_sphere::*;
+pub use sdf_transform::*;
 
 pub trait SdfT: RealField + Copy {}
 

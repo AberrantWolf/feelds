@@ -17,25 +17,60 @@ use nalgebra as na;
 
 use crate::{Sdf, SdfT};
 
-pub struct SdfSubtract<T: SdfT> {
+// ===== Sharp booleans =====
+pub struct SdfUnion<T: SdfT> {
+    pub a: Box<dyn Sdf<T>>,
+    pub b: Box<dyn Sdf<T>>,
+}
+
+pub struct SdfSubtraction<T: SdfT> {
     pub remove: Box<dyn Sdf<T>>,
     pub from: Box<dyn Sdf<T>>,
 }
 
-impl<T: SdfT> Sdf<T> for SdfSubtract<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let remove_dist = -self.remove.run(pos);
-        let keep_dist = self.from.run(pos);
+pub struct SdfIntersection<T: SdfT> {
+    pub a: Box<dyn Sdf<T>>,
+    pub b: Box<dyn Sdf<T>>,
+}
 
-        if remove_dist > keep_dist {
-            remove_dist
-        } else {
-            keep_dist
-        }
+impl<T: SdfT> Sdf<T> for SdfUnion<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let a_dist = self.a.run(pos);
+        let b_dist = self.b.run(pos);
+        *na::partial_min(&a_dist, &b_dist).unwrap()
     }
 }
 
+impl<T: SdfT> Sdf<T> for SdfSubtraction<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let remove_dist = self.remove.run(pos);
+        let keep_dist = self.from.run(pos);
+        *na::partial_max(&-remove_dist, &keep_dist).unwrap()
+    }
+}
+
+impl<T: SdfT> Sdf<T> for SdfIntersection<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let a_dist = self.a.run(pos);
+        let b_dist = self.b.run(pos);
+        *na::partial_max(&a_dist, &b_dist).unwrap()
+    }
+}
+
+// ===== Smooth booleans =====
 pub struct SdfUnionSmooth<T: SdfT> {
+    pub a: Box<dyn Sdf<T>>,
+    pub b: Box<dyn Sdf<T>>,
+    pub smooth: T,
+}
+
+pub struct SdfSubtractionSmooth<T: SdfT> {
+    pub remove: Box<dyn Sdf<T>>,
+    pub from: Box<dyn Sdf<T>>,
+    pub smooth: T,
+}
+
+pub struct SdfIntersectionSmooth<T: SdfT> {
     pub a: Box<dyn Sdf<T>>,
     pub b: Box<dyn Sdf<T>>,
     pub smooth: T,
@@ -57,18 +92,21 @@ impl<T: SdfT> Sdf<T> for SdfUnionSmooth<T> {
     }
 }
 
-pub struct SdfSubtractSmooth<T: SdfT> {
-    pub remove: Box<dyn Sdf<T>>,
-    pub from: Box<dyn Sdf<T>>,
-    pub smooth: T,
-}
-
-impl<T: SdfT> Sdf<T> for SdfSubtractSmooth<T> {
+impl<T: SdfT> Sdf<T> for SdfSubtractionSmooth<T> {
     fn run(&self, pos: &Point3<T>) -> T {
         let remove_dist = self.remove.run(pos);
         let keep_dist = self.from.run(pos);
 
         -calc_union_smooth(&remove_dist, &-keep_dist, &self.smooth)
+    }
+}
+
+impl<T: SdfT> Sdf<T> for SdfIntersectionSmooth<T> {
+    fn run(&self, pos: &Point3<T>) -> T {
+        let a_dist = self.a.run(pos);
+        let b_dist = self.a.run(pos);
+
+        -calc_union_smooth(&-a_dist, &-b_dist, &self.smooth)
     }
 }
 

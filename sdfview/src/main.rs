@@ -17,7 +17,8 @@ use nalgebra::{IsometryMatrix3, Point3, Rotation3, Translation3, Vector3};
 use num::cast::AsPrimitive;
 
 use sdflib::{
-    Sdf, SdfBox, SdfScene, SdfSphere, SdfSubtract, SdfSubtractSmooth, SdfT, SdfTransform,
+    Sdf, SdfBox, SdfScene, SdfSmooth, SdfSphere, SdfSubtraction, SdfSubtractionSmooth, SdfT,
+    SdfTransform, SdfUnionSmooth,
 };
 
 fn calc_normal<T>(scene: &Box<dyn Sdf<T>>, point: &Point3<T>) -> image::Rgb<u8>
@@ -86,20 +87,32 @@ fn main() {
     let ray_ctr = cam_pos + cam_fwd * zoom;
 
     // == making the scene ==
-    let the_box = Box::new(SdfBox {
-        dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
+    let the_box = Box::new(SdfSmooth {
+        elem: Box::new(SdfBox {
+            dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
+        }),
+        smooth: 0.5_f32,
     });
+    // let the_box = Box::new(SdfBox {
+    //     dims: Vector3::new(0.75_f32, 0.75_f32, 0.75_f32),
+    // });
     let the_sphere = Box::new(SdfTransform::new(
         IsometryMatrix3::from_parts(
-            Translation3::new(0_f32, 0.2_f32, 0.2_f32),
+            Translation3::new(0_f32, 1.25_f32, -0.5_f32),
             Rotation3::default(),
         ),
-        Box::new(SdfSphere { radius: 1_f32 }),
+        Box::new(SdfSphere { radius: 0.7_f32 }),
     ));
 
-    let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtractSmooth {
-        remove: the_sphere,
-        from: the_box,
+    // let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfSubtractSmooth {
+    //     remove: the_sphere,
+    //     from: the_box,
+    //     smooth: 0.2_f32,
+    // });
+
+    let bool_thing: Box<dyn Sdf<_>> = Box::new(SdfUnionSmooth {
+        a: the_sphere,
+        b: the_box,
         smooth: 0.2_f32,
     });
 

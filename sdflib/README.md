@@ -11,7 +11,6 @@ These are the functions presented by Quilez (above)... I may skip some of these,
 - [ ] Base primitives
   - [x] Sphere
   - [x] Box
-  - [ ] Rounded Box
   - [ ] Box Frame
   - [ ] Torus
   - [ ] Capped Torus
@@ -45,19 +44,19 @@ These are the functions presented by Quilez (above)... I may skip some of these,
   - [ ] Quad
 - [ ] Alterations
   - [ ] Elongations
-  - [ ] Rounding
+  - [x] Rounding (smoothing)
   - [ ] Onion
   - [ ] Revolution & Extrusion
   - [ ] Change of Metric
 - [ ] Combinations
-  - [ ] Union
-  - [ ] Subtraction
-  - [ ] Intersection
-  - [ ] Smooth Union
-  - [ ] Smooth Subtraction
-  - [ ] Smooth Intersection
+  - [x] Union
+  - [x] Subtraction
+  - [x] Intersection
+  - [x] Smooth Union
+  - [x] Smooth Subtraction
+  - [x] Smooth Intersection
 - [ ] Transformations
-  - [ ] Transform Matrix
+  - [x] Transform Matrix
   - [ ] Scale
   - [ ] Symmetry
   - [ ] Infinite Repetition
@@ -66,3 +65,18 @@ These are the functions presented by Quilez (above)... I may skip some of these,
   - [ ] Twist
   - [ ] Bend
   - [ ] Arbitrary other displacement...?
+
+### After that...
+
+I don't want to get too specific on the farther future, but after implementing a bunch of basic shapes, there are some more tasks to tackle:
+
+- [ ] Support materials for shapes (including blending between materials when blending bools are used)
+- [ ] Better/more ergonomic scene creation and manipulation
+- [ ] Animations (?!) -- maybe relying on that scene manipulation from before?
+- [ ] SIMD support and/or multithreaded rendering
+- [ ] GPGPU implementation of all the equations and wrappers
+- [ ] Other core/structural optimizations
+
+### Okay, now we're reaching...
+
+Look, some of this is my REAL major goal, not gonna lie...

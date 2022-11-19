@@ -12,41 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ops::Div;
-
-use nalgebra::IsometryMatrix3;
 use nalgebra::Point3;
 
 use crate::{Sdf, SdfT};
 
-pub struct SdfTransform<T> {
-    invx: IsometryMatrix3<T>,
-    elem: Box<dyn Sdf<T>>,
+pub struct SdfSmooth<T> {
+    pub elem: Box<dyn Sdf<T>>,
+    pub smooth: T,
 }
 
-impl<T: SdfT> Sdf<T> for SdfTransform<T> {
+impl<T: SdfT> Sdf<T> for SdfSmooth<T> {
     fn run(&self, pos: &Point3<T>) -> T {
-        let xfpos = self.invx.transform_point(pos);
-        self.elem.run(&xfpos)
-    }
-}
-
-impl<T: SdfT> SdfTransform<T> {
-    pub fn new(xform: IsometryMatrix3<T>, elem: Box<dyn Sdf<T>>) -> Self {
-        let invx = xform.inverse();
-        SdfTransform { invx, elem }
-    }
-}
-
-pub struct SdfScale<T: SdfT> {
-    elem: Box<dyn Sdf<T>>,
-    scale: T,
-}
-
-impl<T: SdfT> Sdf<T> for SdfScale<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let s_pos = pos.div(self.scale);
-        self.elem.run(&s_pos) * self.scale
+        let scale_pos = pos * (T::from_f32(1_f32).unwrap() + self.smooth);
+        self.elem.run(&scale_pos) - self.smooth
     }
 }
 
