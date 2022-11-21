@@ -34,9 +34,10 @@ pub use sdf_scene::*;
 pub use sdf_sphere::*;
 pub use sdf_transform::*;
 
-pub trait SdfT: RealField + Copy {}
+pub trait SdfT: RealField + Copy + From<f32> {}
 
 impl SdfT for f32 {}
+impl SdfT for f64 {}
 
 pub trait Sdf<T: SdfT> {
     fn run(&self, pos: &Point3<T>) -> T;

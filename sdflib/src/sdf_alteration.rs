@@ -23,7 +23,8 @@ pub struct SdfSmooth<T> {
 
 impl<T: SdfT> Sdf<T> for SdfSmooth<T> {
     fn run(&self, pos: &Point3<T>) -> T {
-        let scale_pos = pos * (T::from_f32(1_f32).unwrap() + self.smooth);
+        let one: T = 1_f32.into();
+        let scale_pos = pos * (one + self.smooth);
         self.elem.run(&scale_pos) - self.smooth
     }
 }

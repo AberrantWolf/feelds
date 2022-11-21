@@ -24,7 +24,7 @@ pub struct SdfBox<T: SdfT> {
 impl<T: SdfT> Sdf<T> for SdfBox<T> {
     fn run(&self, pos: &Point3<T>) -> T {
         let q = pos.coords.abs() - self.dims;
-        let zero = T::from_f64(0.0).unwrap();
+        let zero = 0.0.into();
         q.map(|t| t.max(zero)).magnitude() + q.max().min(zero)
     }
 }

@@ -78,10 +78,10 @@ pub struct SdfIntersectionSmooth<T: SdfT> {
 
 fn calc_union_smooth<T: SdfT>(a: &T, b: &T, k: &T) -> T {
     let h_part = *k - ComplexField::abs(*a - *b);
-    let h = *na::partial_max(&h_part, &T::from_f32(0_f32).unwrap()).unwrap();
+    let h = *na::partial_max(&h_part, &0.0.into()).unwrap();
 
     let min = *na::partial_min(a, b).unwrap();
-    min - h * h * T::from_f32(0.25_f32).unwrap() / *k
+    min - h * h * 0.25.into() / *k
 }
 
 impl<T: SdfT> Sdf<T> for SdfUnionSmooth<T> {
