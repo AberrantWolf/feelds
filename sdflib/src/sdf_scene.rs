@@ -12,28 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::{Point3, RealField};
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
-pub struct SdfScene<T: SdfT> {
-    elements: Vec<Box<dyn Sdf<T>>>,
+pub struct SdfScene {
+    elements: Vec<Box<dyn Sdf>>,
 }
 
-impl<T: SdfT> Sdf<T> for SdfScene<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let mut smallest = T::max_value().unwrap();
+impl Sdf for SdfScene {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let mut smallest = f32::MAX;
         self.elements.iter().for_each(|elem| {
-            let dist = elem.run(pos);
-            smallest = RealField::min(smallest, dist);
+            let calc = elem.run(pos);
+            smallest = smallest.min(calc.dist);
         });
 
-        smallest
+        SdfCalc { dist: smallest }
     }
 }
 
-impl<T: SdfT> SdfScene<T> {
-    pub fn from_vec(elems: Vec<Box<dyn Sdf<T>>>) -> Self {
+impl SdfScene {
+    pub fn from_vec(elems: Vec<Box<dyn Sdf>>) -> Self {
         SdfScene { elements: elems }
     }
 }

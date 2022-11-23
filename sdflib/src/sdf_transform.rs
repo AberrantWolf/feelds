@@ -14,39 +14,41 @@
 
 use std::ops::Div;
 
-use nalgebra::IsometryMatrix3;
-use nalgebra::Point3;
+use glam::Affine3A;
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
-pub struct SdfTransform<T> {
-    invx: IsometryMatrix3<T>,
-    elem: Box<dyn Sdf<T>>,
+pub struct SdfTransform {
+    invx: Affine3A,
+    elem: Box<dyn Sdf>,
 }
 
-impl<T: SdfT> Sdf<T> for SdfTransform<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let xfpos = self.invx.transform_point(pos);
+impl Sdf for SdfTransform {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let xfpos = self.invx.transform_point3a(*pos);
         self.elem.run(&xfpos)
     }
 }
 
-impl<T: SdfT> SdfTransform<T> {
-    pub fn new(xform: IsometryMatrix3<T>, elem: Box<dyn Sdf<T>>) -> Self {
+impl SdfTransform {
+    pub fn new(xform: Affine3A, elem: Box<dyn Sdf>) -> Self {
         let invx = xform.inverse();
         SdfTransform { invx, elem }
     }
 }
 
-pub struct SdfScale<T: SdfT> {
-    elem: Box<dyn Sdf<T>>,
-    scale: T,
+pub struct SdfScale {
+    elem: Box<dyn Sdf>,
+    scale: f32,
 }
 
-impl<T: SdfT> Sdf<T> for SdfScale<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
+impl Sdf for SdfScale {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
         let s_pos = pos.div(self.scale);
-        self.elem.run(&s_pos) * self.scale
+        SdfCalc {
+            dist: self.elem.run(&s_pos).dist * self.scale,
+        }
     }
 }
 

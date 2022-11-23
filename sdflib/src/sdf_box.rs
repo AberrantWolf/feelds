@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{Point3, Vector3};
-use nalgebra as na;
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
-pub struct SdfBox<T: SdfT> {
-    pub dims: Vector3<T>,
+pub struct SdfBox {
+    pub dims: Vec3A,
 }
 
-impl<T: SdfT> Sdf<T> for SdfBox<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let q = pos.coords.abs() - self.dims;
-        let zero = 0.0.into();
-        q.map(|t| t.max(zero)).magnitude() + q.max().min(zero)
+impl Sdf for SdfBox {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let q = pos.abs() - self.dims;
+        SdfCalc {
+            dist: q.max(Vec3A::ZERO).length() + q.max_element().min(0.0),
+        }
     }
 }
 
@@ -36,18 +36,18 @@ mod tests {
     #[test]
     fn inside_box() {
         let bx = SdfBox {
-            dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
+            dims: Vec3A::new(1f32, 1f32, 1f32),
         };
-        let result = bx.run(&Point3::new(0f32, 0f32, 0.5f32));
-        assert_eq!(result < 0f32, true);
+        let result = bx.run(&Vec3A::new(0f32, 0f32, 0.5f32));
+        assert_eq!(result.dist < 0f32, true);
     }
 
     #[test]
     fn outside_box() {
         let bx = SdfBox {
-            dims: Vector3::<f32>::new(1f32, 1f32, 1f32),
+            dims: Vec3A::new(1f32, 1f32, 1f32),
         };
-        let result = bx.run(&Point3::new(0f32, 0f32, 1.5f32));
-        assert_eq!(result > 0f32, true);
+        let result = bx.run(&Vec3A::new(0f32, 0f32, 1.5f32));
+        assert_eq!(result.dist > 0f32, true);
     }
 }

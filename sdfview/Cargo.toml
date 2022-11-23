@@ -10,7 +10,8 @@ anyhow = "1.0"
 thiserror = "1.0"
 
 image = "0.24"
-nalgebra = "0.31"
+# nalgebra = "0.31"
+glam = "0.22"
 num = "0.4"
 
 sdflib = {path="../sdflib"}

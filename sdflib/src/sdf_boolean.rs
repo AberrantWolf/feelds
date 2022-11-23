@@ -12,101 +12,110 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{ComplexField, Point3};
-use nalgebra as na;
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
 // ===== Sharp booleans =====
-pub struct SdfUnion<T: SdfT> {
-    pub a: Box<dyn Sdf<T>>,
-    pub b: Box<dyn Sdf<T>>,
+pub struct SdfUnion {
+    pub a: Box<dyn Sdf>,
+    pub b: Box<dyn Sdf>,
 }
 
-pub struct SdfSubtraction<T: SdfT> {
-    pub remove: Box<dyn Sdf<T>>,
-    pub from: Box<dyn Sdf<T>>,
+pub struct SdfSubtraction {
+    pub remove: Box<dyn Sdf>,
+    pub from: Box<dyn Sdf>,
 }
 
-pub struct SdfIntersection<T: SdfT> {
-    pub a: Box<dyn Sdf<T>>,
-    pub b: Box<dyn Sdf<T>>,
+pub struct SdfIntersection {
+    pub a: Box<dyn Sdf>,
+    pub b: Box<dyn Sdf>,
 }
 
-impl<T: SdfT> Sdf<T> for SdfUnion<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let a_dist = self.a.run(pos);
-        let b_dist = self.b.run(pos);
-        *na::partial_min(&a_dist, &b_dist).unwrap()
+impl Sdf for SdfUnion {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let a_calc = self.a.run(pos);
+        let b_calc = self.b.run(pos);
+
+        a_calc.min(b_calc)
     }
 }
 
-impl<T: SdfT> Sdf<T> for SdfSubtraction<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let remove_dist = self.remove.run(pos);
-        let keep_dist = self.from.run(pos);
-        *na::partial_max(&-remove_dist, &keep_dist).unwrap()
+impl Sdf for SdfSubtraction {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let remove_calc = self.remove.run(pos);
+        let keep_calc = self.from.run(pos);
+
+        SdfCalc {
+            dist: (-remove_calc.dist).max(keep_calc.dist),
+        }
     }
 }
 
-impl<T: SdfT> Sdf<T> for SdfIntersection<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
+impl Sdf for SdfIntersection {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
         let a_dist = self.a.run(pos);
         let b_dist = self.b.run(pos);
-        *na::partial_max(&a_dist, &b_dist).unwrap()
+        a_dist.max(b_dist)
     }
 }
 
 // ===== Smooth booleans =====
-pub struct SdfUnionSmooth<T: SdfT> {
-    pub a: Box<dyn Sdf<T>>,
-    pub b: Box<dyn Sdf<T>>,
-    pub smooth: T,
+pub struct SdfUnionSmooth {
+    pub a: Box<dyn Sdf>,
+    pub b: Box<dyn Sdf>,
+    pub smooth: f32,
 }
 
-pub struct SdfSubtractionSmooth<T: SdfT> {
-    pub remove: Box<dyn Sdf<T>>,
-    pub from: Box<dyn Sdf<T>>,
-    pub smooth: T,
+pub struct SdfSubtractionSmooth {
+    pub remove: Box<dyn Sdf>,
+    pub from: Box<dyn Sdf>,
+    pub smooth: f32,
 }
 
-pub struct SdfIntersectionSmooth<T: SdfT> {
-    pub a: Box<dyn Sdf<T>>,
-    pub b: Box<dyn Sdf<T>>,
-    pub smooth: T,
+pub struct SdfIntersectionSmooth {
+    pub a: Box<dyn Sdf>,
+    pub b: Box<dyn Sdf>,
+    pub smooth: f32,
 }
 
-fn calc_union_smooth<T: SdfT>(a: &T, b: &T, k: &T) -> T {
-    let h_part = *k - ComplexField::abs(*a - *b);
-    let h = *na::partial_max(&h_part, &0.0.into()).unwrap();
+fn calc_union_smooth(a: f32, b: f32, k: f32) -> f32 {
+    let h_part = k - (a - b).abs();
+    let h = h_part.max(0.0);
 
-    let min = *na::partial_min(a, b).unwrap();
-    min - h * h * 0.25.into() / *k
+    let min = a.min(b);
+    min - h * h * 0.25 / k
 }
 
-impl<T: SdfT> Sdf<T> for SdfUnionSmooth<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let a_dist = self.a.run(pos);
-        let b_dist = self.b.run(pos);
-        calc_union_smooth(&a_dist, &b_dist, &self.smooth)
+impl Sdf for SdfUnionSmooth {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let a_calc = self.a.run(pos);
+        let b_calc = self.b.run(pos);
+        SdfCalc {
+            dist: calc_union_smooth(a_calc.dist, b_calc.dist, self.smooth),
+        }
     }
 }
 
-impl<T: SdfT> Sdf<T> for SdfSubtractionSmooth<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let remove_dist = self.remove.run(pos);
-        let keep_dist = self.from.run(pos);
+impl Sdf for SdfSubtractionSmooth {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let remove_calc = self.remove.run(pos);
+        let keep_calc = self.from.run(pos);
 
-        -calc_union_smooth(&remove_dist, &-keep_dist, &self.smooth)
+        SdfCalc {
+            dist: -calc_union_smooth(remove_calc.dist, -keep_calc.dist, self.smooth),
+        }
     }
 }
 
-impl<T: SdfT> Sdf<T> for SdfIntersectionSmooth<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let a_dist = self.a.run(pos);
-        let b_dist = self.a.run(pos);
+impl Sdf for SdfIntersectionSmooth {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let a_calc = self.a.run(pos);
+        let b_calc = self.a.run(pos);
 
-        -calc_union_smooth(&-a_dist, &-b_dist, &self.smooth)
+        SdfCalc {
+            dist: -calc_union_smooth(-a_calc.dist, -b_calc.dist, self.smooth),
+        }
     }
 }
 

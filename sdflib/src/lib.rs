@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use na::{Point3, RealField};
-use nalgebra as na;
+use glam::Vec3A;
 
 // An implementation of SDF functions.
 // Based on https://iquilezles.org/articles/distfunctions/
@@ -34,11 +33,45 @@ pub use sdf_scene::*;
 pub use sdf_sphere::*;
 pub use sdf_transform::*;
 
-pub trait SdfT: RealField + Copy + From<f32> {}
+#[derive(Copy, Clone)]
+pub struct SdfCalc {
+    pub dist: f32,
+}
 
-impl SdfT for f32 {}
-impl SdfT for f64 {}
+pub trait Sdf {
+    fn run(&self, pos: &Vec3A) -> SdfCalc;
+}
 
-pub trait Sdf<T: SdfT> {
-    fn run(&self, pos: &Point3<T>) -> T;
+impl SdfCalc {
+    fn min(self, other: SdfCalc) -> SdfCalc {
+        if self.dist < other.dist {
+            self
+        } else {
+            other
+        }
+    }
+
+    fn max(self, other: SdfCalc) -> SdfCalc {
+        if self.dist > other.dist {
+            self
+        } else {
+            other
+        }
+    }
+}
+
+impl Eq for SdfCalc {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
+impl PartialOrd for SdfCalc {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.dist.partial_cmp(&other.dist)
+    }
+}
+
+impl PartialEq for SdfCalc {
+    fn eq(&self, other: &Self) -> bool {
+        self.dist == other.dist
+    }
 }

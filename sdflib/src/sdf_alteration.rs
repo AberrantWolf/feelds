@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::Point3;
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
-pub struct SdfSmooth<T> {
-    pub elem: Box<dyn Sdf<T>>,
-    pub smooth: T,
+pub struct SdfSmooth {
+    pub elem: Box<dyn Sdf>,
+    pub smooth: f32,
 }
 
-impl<T: SdfT> Sdf<T> for SdfSmooth<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        let one: T = 1_f32.into();
-        let scale_pos = pos * (one + self.smooth);
-        self.elem.run(&scale_pos) - self.smooth
+impl Sdf for SdfSmooth {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        let scale_pos = *pos * (1.0 + self.smooth);
+        SdfCalc {
+            dist: self.elem.run(&scale_pos).dist - self.smooth,
+        }
     }
 }
 

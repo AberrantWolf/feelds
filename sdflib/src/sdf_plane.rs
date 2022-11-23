@@ -12,57 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use nalgebra::{Point3, UnitVector3};
+use glam::Vec3A;
 
-use crate::{Sdf, SdfT};
+use crate::{Sdf, SdfCalc};
 
-pub struct SdfPlane<T> {
-    pub normal: UnitVector3<T>,
-    pub offset: T,
+pub struct SdfPlane {
+    pub normal: Vec3A,
+    pub offset: f32,
 }
 
-impl<T: SdfT> Sdf<T> for SdfPlane<T> {
-    fn run(&self, pos: &Point3<T>) -> T {
-        pos.coords.dot(&self.normal) - self.offset
+impl Sdf for SdfPlane {
+    fn run(&self, pos: &Vec3A) -> SdfCalc {
+        SdfCalc {
+            dist: pos.dot(self.normal) - self.offset,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nalgebra::Vector3;
 
     #[test]
     fn above_plane() {
-        let normal = UnitVector3::new_normalize(Vector3::new(0_f32, 1_f32, 0_f32));
+        let normal = Vec3A::new(0_f32, 1_f32, 0_f32).normalize();
         let ob = SdfPlane {
             normal,
             offset: 0f32,
         };
-        let result = ob.run(&Point3::new(0f32, 0.1f32, 0f32));
-        assert_eq!(result > 0f32, true);
+        let result = ob.run(&Vec3A::new(0f32, 0.1f32, 0f32));
+        assert_eq!(result.dist > 0f32, true);
     }
 
     #[test]
     fn below_plane() {
-        let normal = UnitVector3::new_normalize(Vector3::new(0_f32, 1_f32, 0_f32));
+        let normal = Vec3A::new(0_f32, 1_f32, 0_f32).normalize();
         let ob = SdfPlane {
             normal,
             offset: 0f32,
         };
-        let result = ob.run(&Point3::new(0f32, -0.1f32, 0f32));
-        assert_eq!(result < 0f32, true);
+        let result = ob.run(&Vec3A::new(0f32, -0.1f32, 0f32));
+        assert_eq!(result.dist < 0f32, true);
     }
 
     #[test]
     fn below_plane_elevated() {
-        let normal = UnitVector3::new_normalize(Vector3::new(0_f32, 1_f32, 0_f32));
+        let normal = Vec3A::new(0_f32, 1_f32, 0_f32).normalize();
         let ob = SdfPlane {
             normal,
             offset: 1f32,
         };
-        let result = ob.run(&Point3::new(0_f32, 0.5_f32, 0_f32));
-        println!("result: {}", result);
-        assert_eq!(result < 0f32, true);
+        let result = ob.run(&Vec3A::new(0_f32, 0.5_f32, 0_f32));
+        println!("result: {}", result.dist);
+        assert_eq!(result.dist < 0f32, true);
     }
 }
