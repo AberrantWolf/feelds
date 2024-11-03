@@ -1,4 +1,4 @@
-// Copyright 2022 Scott Harper
+// Copyright 2022-2024 Scott Harper
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
 // limitations under the License.
 
 use glam::Affine3A;
-use image::ImageBuffer;
+use image::{ImageBuffer, Rgb};
 use num::cast::AsPrimitive;
+use rayon::prelude::*;
 
 use glam::{Quat, Vec3A, Vec3Swizzles};
 
 use sdflib::{Sdf, SdfBox, SdfPlane, SdfScene, SdfSmooth, SdfSphere, SdfTransform, SdfUnionSmooth};
 
-fn calc_normal(scene: &Box<dyn Sdf>, point: Vec3A) -> image::Rgb<u8> {
+fn calc_normal(scene: &Box<dyn Sdf + Sync>, point: Vec3A) -> image::Rgb<u8> {
     let small_step = Vec3A::new(0.001f32.into(), 0f32.into(), 0f32.into());
 
     let grad_x =
@@ -38,7 +39,7 @@ fn calc_normal(scene: &Box<dyn Sdf>, point: Vec3A) -> image::Rgb<u8> {
     image::Rgb([r.as_(), g.as_(), b.as_()])
 }
 
-fn march_rays(scene: &Box<dyn Sdf>, origin: Vec3A, direction: Vec3A) -> image::Rgb<u8> {
+fn march_rays(scene: &Box<dyn Sdf + Sync>, origin: Vec3A, direction: Vec3A) -> image::Rgb<u8> {
     let mut calc;
     let mut new_origin = origin;
 
@@ -104,21 +105,22 @@ fn main() {
         ),
         Box::new(SdfSphere { radius: 0.7_f32 }),
     ));
-    let bool_thing: Box<dyn Sdf> = Box::new(SdfUnionSmooth {
+    let bool_thing: Box<dyn Sdf + Sync> = Box::new(SdfUnionSmooth {
         a: the_sphere,
         b: the_box,
         smooth: 0.2_f32,
     });
 
-    let ground: Box<dyn Sdf> = Box::new(SdfPlane {
+    let ground: Box<dyn Sdf + Sync> = Box::new(SdfPlane {
         normal: Vec3A::new(0_f32, 1_f32, 0_f32).normalize(),
         offset: -1_f32,
     });
 
-    let scene: Box<dyn Sdf> = Box::new(SdfScene::from_vec(vec![bool_thing, ground]));
+    let scene: Box<dyn Sdf + Sync> = Box::new(SdfScene::from_vec(vec![bool_thing, ground]));
 
     // == rendering the image
-    let img = ImageBuffer::from_fn(width, height, |x, y| {
+    let mut img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+    img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let x_ratio = x as f32 / width as f32;
         let y_ratio = y as f32 / height as f32;
 
@@ -128,7 +130,7 @@ fn main() {
         let px_point = ray_ctr + u * cam_right * aspect - v * cam_up;
         let direction = (px_point - cam_pos).normalize();
 
-        march_rays(&scene, cam_pos, direction)
+        *pixel = march_rays(&scene, cam_pos, direction);
     });
 
     img.save("test.png").unwrap()

@@ -1,4 +1,4 @@
-// Copyright 2022 Scott Harper
+// Copyright 2022-2024 Scott Harper
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ use crate::{Sdf, SdfCalc};
 
 pub struct SdfTransform {
     invx: Affine3A,
-    elem: Box<dyn Sdf>,
+    elem: Box<dyn Sdf + Sync>,
 }
 
 impl Sdf for SdfTransform {
@@ -32,14 +32,14 @@ impl Sdf for SdfTransform {
 }
 
 impl SdfTransform {
-    pub fn new(xform: Affine3A, elem: Box<dyn Sdf>) -> Self {
+    pub fn new(xform: Affine3A, elem: Box<dyn Sdf + Sync>) -> Self {
         let invx = xform.inverse();
         SdfTransform { invx, elem }
     }
 }
 
 pub struct SdfScale {
-    elem: Box<dyn Sdf>,
+    elem: Box<dyn Sdf + Sync>,
     scale: f32,
 }
 

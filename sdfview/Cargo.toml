@@ -9,9 +9,9 @@ edition = "2021"
 anyhow = "1.0"
 thiserror = "1.0"
 
-image = "0.24"
-# nalgebra = "0.31"
-glam = "0.22"
+image = { version = "0.25", features = ["rayon"] }
+glam = "0.29"
 num = "0.4"
 
 sdflib = {path="../sdflib"}
+rayon = "1.10.0"

@@ -1,4 +1,4 @@
-// Copyright 2022 Scott Harper
+// Copyright 2022-2024 Scott Harper
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ use glam::Vec3A;
 use crate::{Sdf, SdfCalc};
 
 pub struct SdfScene {
-    elements: Vec<Box<dyn Sdf>>,
+    elements: Vec<Box<dyn Sdf + Sync>>,
 }
 
 impl Sdf for SdfScene {
@@ -33,7 +33,7 @@ impl Sdf for SdfScene {
 }
 
 impl SdfScene {
-    pub fn from_vec(elems: Vec<Box<dyn Sdf>>) -> Self {
+    pub fn from_vec(elems: Vec<Box<dyn Sdf + Sync>>) -> Self {
         SdfScene { elements: elems }
     }
 }

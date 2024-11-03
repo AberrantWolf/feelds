@@ -1,4 +1,4 @@
-// Copyright 2022 Scott Harper
+// Copyright 2022-2024 Scott Harper
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ use glam::Vec3A;
 use crate::{Sdf, SdfCalc};
 
 pub struct SdfSmooth {
-    pub elem: Box<dyn Sdf>,
+    pub elem: Box<dyn Sdf + Sync>,
     pub smooth: f32,
 }
 

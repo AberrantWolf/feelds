@@ -8,7 +8,4 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 thiserror = "1.0"
-
-# nalgebra = "0.31"
-
-glam = "0.22"
+glam = "0.29"

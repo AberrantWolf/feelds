@@ -1,4 +1,4 @@
-// Copyright 2022 Scott Harper
+// Copyright 2022-2024 Scott Harper
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ use crate::{Sdf, SdfCalc};
 
 // ===== Sharp booleans =====
 pub struct SdfUnion {
-    pub a: Box<dyn Sdf>,
-    pub b: Box<dyn Sdf>,
+    pub a: Box<dyn Sdf + Sync>,
+    pub b: Box<dyn Sdf + Sync>,
 }
 
 pub struct SdfSubtraction {
-    pub remove: Box<dyn Sdf>,
-    pub from: Box<dyn Sdf>,
+    pub remove: Box<dyn Sdf + Sync>,
+    pub from: Box<dyn Sdf + Sync>,
 }
 
 pub struct SdfIntersection {
-    pub a: Box<dyn Sdf>,
-    pub b: Box<dyn Sdf>,
+    pub a: Box<dyn Sdf + Sync>,
+    pub b: Box<dyn Sdf + Sync>,
 }
 
 impl Sdf for SdfUnion {
@@ -62,20 +62,20 @@ impl Sdf for SdfIntersection {
 
 // ===== Smooth booleans =====
 pub struct SdfUnionSmooth {
-    pub a: Box<dyn Sdf>,
-    pub b: Box<dyn Sdf>,
+    pub a: Box<dyn Sdf + Sync>,
+    pub b: Box<dyn Sdf + Sync>,
     pub smooth: f32,
 }
 
 pub struct SdfSubtractionSmooth {
-    pub remove: Box<dyn Sdf>,
-    pub from: Box<dyn Sdf>,
+    pub remove: Box<dyn Sdf + Sync>,
+    pub from: Box<dyn Sdf + Sync>,
     pub smooth: f32,
 }
 
 pub struct SdfIntersectionSmooth {
-    pub a: Box<dyn Sdf>,
-    pub b: Box<dyn Sdf>,
+    pub a: Box<dyn Sdf + Sync>,
+    pub b: Box<dyn Sdf + Sync>,
     pub smooth: f32,
 }
 
